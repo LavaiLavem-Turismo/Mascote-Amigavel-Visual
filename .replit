@@ -26,3 +26,12 @@ externalPort = 8080
 [[ports]]
 localPort = 8081
 externalPort = 80
+
+[[ports]]
+localPort = 22967
+externalPort = 3000
+
+[userenv]
+
+[userenv.shared]
+VITE_OPENAI_API_KEY = ""
