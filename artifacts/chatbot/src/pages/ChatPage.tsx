@@ -4,7 +4,6 @@ import type { ChatMessage } from "../lib/api";
 import { MessageBubble } from "../components/MessageBubble";
 import type { Message } from "../components/MessageBubble";
 import { TypingIndicator } from "../components/TypingIndicator";
-import logoImg from "@assets/Capa_-_1_(2)_1781388637863.png";
 import mascoteImg from "@assets/ChatGPT_Image_21_de_dez._de_2025,_13_03_23_1781388637862.png";
 
 let idCounter = 0;
@@ -91,38 +90,25 @@ export function ChatPage() {
           boxShadow: "0 2px 20px rgba(0,0,0,0.4)",
         }}
       >
-        {/* Logo */}
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div
+          className="flex-shrink-0 w-11 h-11 rounded-full overflow-hidden border-2"
+          style={{ borderColor: "var(--color-brand-blue)" }}
+        >
           <img
-            src={logoImg}
-            alt="La Vai La Vem Turismo"
-            className="h-10 object-contain"
-            style={{ filter: "brightness(1.1)" }}
+            src={mascoteImg}
+            alt="Lala mascote"
+            className="w-full h-full object-cover object-top"
           />
         </div>
-
-        {/* Mascot + status */}
-        <div className="flex items-center gap-2">
-          <div className="flex flex-col items-end">
-            <span className="text-sm font-semibold text-white">Lala</span>
-            <span className="text-xs flex items-center gap-1" style={{ color: "var(--color-brand-teal)" }}>
-              <span
-                className="inline-block w-1.5 h-1.5 rounded-full"
-                style={{ background: "var(--color-brand-teal)" }}
-              />
-              Online agora
-            </span>
-          </div>
-          <div
-            className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden border-2"
-            style={{ borderColor: "var(--color-brand-blue)" }}
-          >
-            <img
-              src={mascoteImg}
-              alt="Lala mascote"
-              className="w-full h-full object-cover object-top"
+        <div className="flex flex-col">
+          <span className="text-base font-semibold text-white leading-tight">Lala</span>
+          <span className="text-xs flex items-center gap-1" style={{ color: "var(--color-brand-teal)" }}>
+            <span
+              className="inline-block w-1.5 h-1.5 rounded-full"
+              style={{ background: "var(--color-brand-teal)" }}
             />
-          </div>
+            La Vai La Vem Turismo · Online agora
+          </span>
         </div>
       </header>
 

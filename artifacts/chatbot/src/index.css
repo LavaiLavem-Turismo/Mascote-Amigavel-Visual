@@ -125,3 +125,10 @@
   height: 3px;
   border-radius: 2px;
 }
+
+/* Mobile safe-area (iPhone notch / home bar) */
+#root {
+  height: 100dvh;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
