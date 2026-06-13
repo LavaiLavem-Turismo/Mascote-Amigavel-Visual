@@ -1,0 +1,115 @@
+Crie um chatbot de atendimento ao cliente para uma empresa de passeios turísticos em Natal/RN. Stack: React + Vite + TypeScript + Tailwind. Dark theme: fundo #0f1117, cards #1a1d27, accent #00d4aa, fonte DM Sans. Use Replit AI Integration (OpenAI gpt-4o-mini) para as respostas da IA. Interface estilo chat (bolhas, indicador de digitando, scroll automático, campo + Enter para enviar). Quando o bot concluir coleta de dados, exibir botão "Falar pelo WhatsApp" com link wa.me/55XXXXXXXXXXX?text=<mensagem pré-preenchida>.
+
+O catálogo e system prompt já estão definidos abaixo — apenas implemente.
+
+src/catalog.ts:
+
+export const CATALOG = {
+  empresa: "Passeios RN",
+  whatsapp: "5584999999999", // ← trocar pelo número real
+  passeios: [
+    {
+      id: "pipa",
+      nome: "Praia de Pipa (bate-volta)",
+      preco: "consultar agência",
+      duracao: "Dia inteiro (06h–16h30)",
+      saida: "Saída entre 06h e 07h do hotel",
+      inclui: "Transporte, guia credenciado, seguro passageiro",
+      nao_inclui: "Alimentação, passeios opcionais (lancha, quadriciclo)",
+      levar: "Protetor solar, boné, óculos escuros, roupa de banho, muda extra, água, dinheiro em espécie",
+      destaques: "Baía dos Golfinhos, Chapadão de Pipa, Lagoa Guaraíras, piscinas naturais"
+    },
+    {
+      id: "jenipabu_van",
+      nome: "Dunas de Jenipabu (van)",
+      preco: "~R$ 93/pessoa",
+      duracao: "09h às 16h30",
+      saida: "Saída às 09h — Terça, Quinta e Sábado",
+      inclui: "Transporte, guia credenciado, seguro passageiro",
+      nao_inclui: "Buggy (opcional no local ~R$175/pessoa), alimentação, taxa ambiental (~R$20/buggy)",
+      levar: "Água, protetor solar, óculos escuros, boné, toalha, roupa de banho, dinheiro em espécie",
+      destaques: "Dunas, lagoa de Genipabu, brincadeiras (esquibunda, aerobunda)",
+      embarque: "Hotéis em Ponta Negra, Via Costeira ou Praia do Forte"
+    },
+    {
+      id: "buggy_litoral",
+      nome: "Buggy Litoral Norte (completo)",
+      preco: "~R$ 175/pessoa (compartilhado) ou R$ 700/buggy (privativo até 4 pax)",
+      duracao: "08h às 15h30 (7h)",
+      saida: "Saída às 08h–08h30 — saídas diárias",
+      inclui: "Buggy, bugueiro credenciado, seguro passageiro",
+      nao_inclui: "Taxa de balsa + entrada dunas (~R$120/buggy), alimentação, brincadeiras (~R$20 cada)",
+      levar: "Água, protetor solar, óculos escuros, boné, toalha, roupa de banho, dinheiro em espécie. Evitar objetos nos bolsos",
+      destaques: "7–9 praias, 3 lagoas (Genipabu, Pitangui, Jacumã), 4 parques de dunas",
+      embarque: "Hotéis em Ponta Negra, Via Costeira ou Praia do Forte"
+    },
+    {
+      id: "maracajau",
+      nome: "Maracajaú (snorkel/mergulho)",
+      preco: "~R$ 110–150 (catamarã + snorkel) | Mergulho com cilindro: R$ 160 (Pix) ou R$ 180 (cartão)",
+      duracao: "~6h no total (2h nos parrachos)",
+      saida: "Saída varia conforme maré — entre 05h30 e 08h00",
+      inclui: "Transporte, guia, seguro, catamarã, máscara e snorkel, taxa ambiental",
+      nao_inclui: "Alimentação, mergulho com cilindro (cobrado à parte), quadriciclo",
+      levar: "Protetor solar BIODEGRADÁVEL (obrigatório), sapatilha aquática, documento com foto original, roupa de banho, toalha, dinheiro em espécie",
+      destaques: "Parrachos a 7km da costa, piscinas naturais cristalinas, fauna marinha (polvos, lagostas, budião azul)",
+      obs: "Horário depende da tábua de marés do dia — confirmar na véspera. Crianças devem ter min. 2 anos completos."
+    },
+    {
+      id: "citytour",
+      nome: "City Tour Natal",
+      preco: "~R$ 50/pessoa (grupo)",
+      duracao: "Manhã: 08h–15h (7h) | Tarde c/ pôr do sol: 13h–18h30 (5–6h)",
+      saida: "Manhã: Ter–Dom | Tarde: Ter, Qui, Sáb e Dom",
+      inclui: "Transporte, guia credenciado, seguro passageiro",
+      nao_inclui: "Entrada Forte dos Reis Magos (R$10), entrada Cajueiro (R$8), alimentação",
+      levar: "Roupas leves, trajes de banho, óculos escuros, protetor solar, boné",
+      destaques: "Forte dos Reis Magos, Maior Cajueiro do Mundo (Pirangi), Centro Histórico, Barreira do Inferno, Ponta Negra",
+      obs: "Forte dos Reis Magos fecha às segundas-feiras."
+    }
+  ],
+  pares_populares: [
+    ["jenipabu_van", "buggy_litoral"],
+    ["pipa", "jenipabu_van"],
+    ["maracajau", "citytour"]
+  ],
+  politicas: {
+    cancelamento: "Cancelamento com mais de 48h de antecedência garante reembolso integral. Menos de 48h: sem reembolso.",
+    pagamento: "Pix e dinheiro em espécie são mais baratos (alguns passeios cobram taxa de 20% no cartão).",
+    chuva: "Em caso de chuva forte que impossibilite o passeio, remarcamos sem custo. Chuva leve não cancela.",
+    criancas: "Maracajaú requer mínimo 2 anos completos com documento. Demais passeios: consultar.",
+    segunda_feira: "Forte dos Reis Magos fecha às segundas — evitar City Tour na segunda."
+  }
+};
+
+System prompt (colar em src/lib/openai.ts):
+
+Você é um assistente de atendimento da [empresa], agência de passeios turísticos em Natal/RN.
+Seu objetivo: ajudar o cliente a escolher passeios, responder dúvidas e coletar dados para reserva.
+## CATÁLOGO DE PASSEIOS
+[inserir JSON dos passeios do catalog.ts acima]
+## PARES MAIS POPULARES (sugira quando relevante)
+- Jenipabu van → geralmente combinado com Buggy Litoral Norte
+- Pipa → geralmente combinado com Jenipabu
+- Maracajaú → geralmente combinado com City Tour
+## FLUXO DE VENDA
+1. Cumprimente e pergunte o que o cliente procura (dias disponíveis, preferências: aventura, praia, história)
+2. Sugira 2–3 passeios adequados ao perfil
+3. Quando o cliente mostrar interesse, mencione o par mais popular
+4. Colete: nome, passeio(s) escolhido(s), data desejada, quantidade de pessoas
+5. Ao confirmar, responda com este JSON no final (mantenha o texto normal antes):
+   |||RESUMO:{"nome":"...","passeios":["..."],"data":"...","pessoas":N}|||
+## SUPORTE (responder quando cliente já comprou ou tem dúvida)
+- Horários e saídas → use os dados do catálogo
+- O que levar → use o campo "levar" de cada passeio
+- Cancelamento → política: 48h para reembolso integral
+- Pagamento → Pix é mais barato que cartão em alguns passeios
+- Segunda-feira → Forte dos Reis Magos fecha, evitar City Tour
+- Maré (Maracajaú/Pipa) → horário varia conforme maré, confirmar na véspera
+- Problema grave ou pagamento → diga que vai transferir para atendente e responda:
+  |||SUPORTE:{"problema":"...","nome":"..."}|||
+## REGRAS
+- Responda sempre em português brasileiro, tom amigável e direto
+- Mensagens curtas (máx 4 linhas por resposta)
+- Não invente preços fora do catálogo
+- Não discuta temas fora de turismo em Natal/RN
