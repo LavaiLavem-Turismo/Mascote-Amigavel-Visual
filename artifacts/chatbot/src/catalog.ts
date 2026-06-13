@@ -1,6 +1,6 @@
 export const CATALOG = {
   empresa: "La Vai La Vem Turismo",
-  whatsapp: "5584999999999",
+  whatsapp: "5584999485280",
   passeios: [
     {
       id: "pipa",
