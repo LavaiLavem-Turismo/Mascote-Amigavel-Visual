@@ -1,3 +1,4 @@
+import { FaWhatsapp } from "react-icons/fa";
 import mascoteImg from "@assets/ChatGPT_Image_21_de_dez._de_2025,_13_03_23_1781388637862.png";
 import type { ResumoData, SuporteData } from "../lib/api";
 import { WhatsAppButton } from "./WhatsAppButton";
@@ -64,15 +65,35 @@ export function MessageBubble({ message }: Props) {
 
         {message.suporte && (
           <div
-            className="rounded-2xl p-4 flex flex-col gap-2"
+            className="msg-animate rounded-2xl p-4 flex flex-col gap-3"
             style={{ background: "var(--color-bg-card)", border: "1px solid rgba(192,57,43,0.4)" }}
           >
-            <p className="text-sm font-semibold" style={{ color: "#e74c3c" }}>
-              ⚠️ Transferindo para atendente humano
-            </p>
-            <p className="text-xs text-white/60">
-              Um de nossos atendentes entrará em contato em breve para resolver: <em>{message.suporte.problema}</em>
-            </p>
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-semibold" style={{ color: "#e74c3c" }}>
+                ⚠️ Atendente humano necessário
+              </p>
+              <p className="text-xs text-white/60">
+                Assunto: <em>{message.suporte.problema}</em>
+              </p>
+              {message.suporte.nome && (
+                <p className="text-xs text-white/60">Cliente: {message.suporte.nome}</p>
+              )}
+            </div>
+            <a
+              href={`https://wa.me/${CATALOG.whatsapp}?text=${encodeURIComponent(
+                `Olá! Preciso de suporte.\n\n` +
+                `👤 Nome: ${message.suporte.nome || "não informado"}\n` +
+                `❓ Problema: ${message.suporte.problema}\n\n` +
+                `Fui direcionado pelo chatbot da La Vai La Vem Turismo.`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 py-3 px-5 rounded-xl font-semibold text-white transition-all hover:scale-105 active:scale-95"
+              style={{ background: "#25D366", boxShadow: "0 4px 16px rgba(37,211,102,0.35)" }}
+            >
+              <FaWhatsapp size={20} />
+              Falar com atendente
+            </a>
           </div>
         )}
       </div>
