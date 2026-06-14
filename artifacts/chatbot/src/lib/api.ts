@@ -52,12 +52,12 @@ export function parseResponse(content: string): ParsedResponse {
   return { text, resumo, suporte };
 }
 
-export async function sendChatMessage(messages: ChatMessage[]): Promise<string> {
+export async function sendChatMessage(messages: ChatMessage[], agentId?: string): Promise<string> {
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   const response = await fetch(`${base}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({ messages, agent: agentId ?? "lala" }),
   });
 
   if (!response.ok) {

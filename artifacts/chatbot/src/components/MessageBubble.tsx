@@ -1,8 +1,8 @@
 import { FaWhatsapp } from "react-icons/fa";
-import mascoteImg from "@assets/ChatGPT_Image_21_de_dez._de_2025,_13_03_23_1781388637862.png";
 import type { ResumoData, SuporteData } from "../lib/api";
 import { WhatsAppButton } from "./WhatsAppButton";
 import { CATALOG } from "../catalog";
+import type { AgentDef } from "../lib/agents";
 
 export interface Message {
   id: string;
@@ -15,19 +15,28 @@ export interface Message {
 
 interface Props {
   message: Message;
+  agent?: AgentDef;
 }
 
-export function MessageBubble({ message }: Props) {
+export function MessageBubble({ message, agent }: Props) {
   const isBot = message.role === "bot";
+  const agentColor = agent?.color ?? "var(--color-brand-blue)";
+  const agentColorRgb = agent?.colorRgb ?? "30,144,255";
+  const agentGradient = agent?.gradient ?? "linear-gradient(135deg, var(--color-brand-blue), #0a7acc)";
+  const agentImg = agent?.img;
 
   return (
     <div className={`flex items-end gap-2 msg-animate ${isBot ? "" : "flex-row-reverse"}`}>
       {isBot && (
         <div
           className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden border-2"
-          style={{ borderColor: "var(--color-brand-blue)" }}
+          style={{ borderColor: agentColor }}
         >
-          <img src={mascoteImg} alt="Lala" className="w-full h-full object-cover object-top" />
+          {agentImg ? (
+            <img src={agentImg} alt={agent?.name ?? "Bot"} className="w-full h-full object-cover object-center" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-lg">🦜</div>
+          )}
         </div>
       )}
 
@@ -43,18 +52,18 @@ export function MessageBubble({ message }: Props) {
               isBot
                 ? {
                     background: "var(--color-bg-card)",
-                    border: "1px solid rgba(30,144,255,0.15)",
+                    border: `1px solid rgba(${agentColorRgb}, 0.18)`,
                   }
                 : {
-                    background: "linear-gradient(135deg, var(--color-brand-blue), #0a7acc)",
-                    boxShadow: "0 4px 14px rgba(30,144,255,0.25)",
+                    background: agentGradient,
+                    boxShadow: `0 4px 14px rgba(${agentColorRgb}, 0.28)`,
                   }
             }
           >
-            {message.text.split("\n").map((line, i) => (
+            {message.text.split("\n").map((line, i, arr) => (
               <span key={i}>
                 {line}
-                {i < message.text.split("\n").length - 1 && <br />}
+                {i < arr.length - 1 && <br />}
               </span>
             ))}
           </div>
@@ -102,9 +111,8 @@ export function MessageBubble({ message }: Props) {
       {!isBot && (
         <div
           className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-          style={{ background: "var(--color-brand-blue)", color: "#fff" }}
+          style={{ background: agentGradient, color: "#fff" }}
         >
-          {/* user avatar */}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
           </svg>

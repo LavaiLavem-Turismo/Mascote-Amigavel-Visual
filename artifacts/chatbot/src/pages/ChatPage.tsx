@@ -5,25 +5,12 @@ import { MessageBubble } from "../components/MessageBubble";
 import type { Message } from "../components/MessageBubble";
 import { TypingIndicator } from "../components/TypingIndicator";
 import { QuickReplies } from "../components/QuickReplies";
-import mascoteImg from "@assets/ChatGPT_Image_21_de_dez._de_2025,_13_03_23_1781388637862.png";
+import type { AgentDef } from "../lib/agents";
 
 let idCounter = 0;
 function uid() {
   return String(Date.now()) + String(++idCounter);
 }
-
-const WELCOME_CHIPS = ["🏄 Aventura", "🌊 Praia", "🏛️ História", "💰 Preços"];
-
-const WELCOME_MESSAGE: Message = {
-  id: "welcome-0",
-  role: "bot",
-  text: "Olá! Sou a Lala, sua guia virtual da La Vai La Vem Turismo! 🌊 Estou aqui para te ajudar a escolher os melhores passeios em Natal/RN. Você prefere aventura nas dunas, mergulho no mar, ou conhecer a cidade histórica?",
-  chips: WELCOME_CHIPS,
-};
-
-const LS_MESSAGES_KEY = "lala_chat_messages";
-const LS_HISTORY_KEY = "lala_chat_history";
-const LS_CHIPS_SEEN_KEY = "lala_welcome_chips_seen";
 
 function loadFromStorage<T>(key: string): T | null {
   try {
@@ -42,24 +29,38 @@ function saveToStorage(key: string, value: unknown) {
   }
 }
 
-function getInitialMessages(): Message[] {
-  const saved = loadFromStorage<Message[]>(LS_MESSAGES_KEY);
-  if (saved && saved.length > 0) return saved;
-  return [WELCOME_MESSAGE];
+interface Props {
+  agent: AgentDef;
+  onBack: () => void;
 }
 
-function getInitialHistory(): ChatMessage[] {
-  const saved = loadFromStorage<ChatMessage[]>(LS_HISTORY_KEY);
-  return saved ?? [];
-}
+export function ChatPage({ agent, onBack }: Props) {
+  const LS_MESSAGES_KEY = `${agent.lsPrefix}_chat_messages`;
+  const LS_HISTORY_KEY = `${agent.lsPrefix}_chat_history`;
+  const LS_CHIPS_SEEN_KEY = `${agent.lsPrefix}_chips_seen`;
 
-export function ChatPage() {
+  const welcomeMessage: Message = {
+    id: `welcome-${agent.id}`,
+    role: "bot",
+    text: agent.welcomeText,
+    chips: agent.welcomeChips,
+  };
+
+  const getInitialMessages = () => {
+    const saved = loadFromStorage<Message[]>(LS_MESSAGES_KEY);
+    if (saved && saved.length > 0) return saved;
+    return [welcomeMessage];
+  };
+
+  const getInitialHistory = () => {
+    const saved = loadFromStorage<ChatMessage[]>(LS_HISTORY_KEY);
+    return saved ?? [];
+  };
+
   const [messages, setMessages] = useState<Message[]>(getInitialMessages);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [history, setHistory] = useState<ChatMessage[]>(getInitialHistory);
-  // True only on the very first ever opening of the app (no LS flag present).
-  // Once set false (by "Nova conversa" or next sessions) chips never return.
   const [showWelcomeChips, setShowWelcomeChips] = useState<boolean>(
     () => localStorage.getItem(LS_CHIPS_SEEN_KEY) !== "true"
   );
@@ -78,7 +79,6 @@ export function ChatPage() {
     saveToStorage(LS_HISTORY_KEY, history);
   }, [history]);
 
-  // Persist the "chips seen" flag on first mount so future sessions skip chips.
   useEffect(() => {
     localStorage.setItem(LS_CHIPS_SEEN_KEY, "true");
   }, []);
@@ -86,10 +86,10 @@ export function ChatPage() {
   const handleNewConversation = useCallback(() => {
     localStorage.removeItem(LS_MESSAGES_KEY);
     localStorage.removeItem(LS_HISTORY_KEY);
-    setMessages([WELCOME_MESSAGE]);
+    setMessages([welcomeMessage]);
     setHistory([]);
     setInput("");
-    setShowWelcomeChips(false); // chips never reappear after Nova conversa
+    setShowWelcomeChips(false);
     setTimeout(() => inputRef.current?.focus(), 0);
   }, []);
 
@@ -107,7 +107,7 @@ export function ChatPage() {
     setIsTyping(true);
 
     try {
-      const rawContent = await sendChatMessage(newHistory);
+      const rawContent = await sendChatMessage(newHistory, agent.id);
       const parsed = parseResponse(rawContent);
 
       const botMessage: Message = {
@@ -120,7 +120,7 @@ export function ChatPage() {
 
       setMessages((prev) => [...prev, botMessage]);
       setHistory((prev) => [...prev, { role: "assistant", content: rawContent }]);
-    } catch (err) {
+    } catch {
       const errMessage: Message = {
         id: uid(),
         role: "bot",
@@ -131,7 +131,7 @@ export function ChatPage() {
       setIsTyping(false);
       inputRef.current?.focus();
     }
-  }, [input, isTyping, history]);
+  }, [input, isTyping, history, agent.id]);
 
   const handleChipClick = useCallback((chip: string) => {
     handleSend(chip);
@@ -149,7 +149,6 @@ export function ChatPage() {
     -1
   );
 
-
   return (
     <div
       className="flex flex-col h-screen w-full"
@@ -160,40 +159,52 @@ export function ChatPage() {
         className="flex-shrink-0 flex items-center gap-3 px-4 py-3 z-10"
         style={{
           background: "var(--color-bg-card)",
-          borderBottom: "1px solid rgba(30,144,255,0.2)",
+          borderBottom: `1px solid rgba(${agent.colorRgb}, 0.25)`,
           boxShadow: "0 2px 20px rgba(0,0,0,0.4)",
         }}
       >
+        {/* Back button */}
+        <button
+          onClick={onBack}
+          className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+          style={{ background: `rgba(${agent.colorRgb}, 0.12)`, color: agent.color }}
+          aria-label="Voltar"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+
+        {/* Avatar */}
         <div
           className="flex-shrink-0 w-11 h-11 rounded-full overflow-hidden border-2"
-          style={{ borderColor: "var(--color-brand-blue)" }}
+          style={{ borderColor: agent.color }}
         >
           <img
-            src={mascoteImg}
-            alt="Lala mascote"
-            className="w-full h-full object-cover object-top"
+            src={agent.img}
+            alt={agent.name}
+            className="w-full h-full object-cover object-center"
           />
         </div>
+
+        {/* Name + status */}
         <div className="flex flex-col flex-1">
-          <span className="text-base font-semibold text-white leading-tight">Lala</span>
-          <span className="text-xs flex items-center gap-1" style={{ color: "var(--color-brand-teal)" }}>
-            <span
-              className="inline-block w-1.5 h-1.5 rounded-full"
-              style={{ background: "var(--color-brand-teal)" }}
-            />
-            La Vai La Vem Turismo · Online agora
+          <span className="text-base font-semibold text-white leading-tight">{agent.name}</span>
+          <span className="text-xs flex items-center gap-1" style={{ color: agent.color }}>
+            <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: agent.color }} />
+            {agent.role} · Online agora
           </span>
         </div>
 
-        {/* Nova conversa button — only when there's a saved conversation */}
+        {/* Nova conversa */}
         {messages.length > 1 && (
           <button
             onClick={handleNewConversation}
             title="Nova conversa"
             className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all hover:scale-105 active:scale-95"
             style={{
-              background: "rgba(30,144,255,0.12)",
-              border: "1px solid rgba(30,144,255,0.3)",
+              background: `rgba(${agent.colorRgb}, 0.12)`,
+              border: `1px solid rgba(${agent.colorRgb}, 0.3)`,
               color: "rgba(255,255,255,0.7)",
             }}
           >
@@ -201,29 +212,34 @@ export function ChatPage() {
               <polyline points="1 4 1 10 7 10" />
               <path d="M3.51 15a9 9 0 1 0 .49-4.35" />
             </svg>
-            Nova conversa
+            Nova
           </button>
         )}
       </header>
 
-      {/* Wave stripe */}
-      <div className="wave-divider flex-shrink-0" />
+      {/* Wave stripe in agent color */}
+      <div
+        className="flex-shrink-0 h-[3px]"
+        style={{ background: agent.gradient }}
+      />
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-4">
         {messages.map((msg, i) => (
           <div key={msg.id} className="flex flex-col gap-2">
-            <MessageBubble message={msg} />
+            <MessageBubble message={msg} agent={agent} />
             {msg.chips && i === lastBotIndex && !isTyping && showWelcomeChips && (
               <QuickReplies
                 chips={msg.chips}
                 onSelect={handleChipClick}
                 disabled={isTyping}
+                color={agent.color}
+                colorRgb={agent.colorRgb}
               />
             )}
           </div>
         ))}
-        {isTyping && <TypingIndicator />}
+        {isTyping && <TypingIndicator color={agent.color} />}
         <div ref={messagesEndRef} />
       </div>
 
@@ -232,14 +248,14 @@ export function ChatPage() {
         className="flex-shrink-0 px-4 py-3"
         style={{
           background: "var(--color-bg-card)",
-          borderTop: "1px solid rgba(30,144,255,0.2)",
+          borderTop: `1px solid rgba(${agent.colorRgb}, 0.2)`,
         }}
       >
         <div
           className="flex items-end gap-3 rounded-2xl px-4 py-2"
           style={{
             background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(30,144,255,0.2)",
+            border: `1px solid rgba(${agent.colorRgb}, 0.2)`,
           }}
         >
           <textarea
@@ -247,7 +263,7 @@ export function ChatPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Digite sua mensagem..."
+            placeholder={`Fale com ${agent.name}...`}
             rows={1}
             className="flex-1 bg-transparent text-white text-sm resize-none outline-none placeholder:text-white/30 py-2 max-h-32"
             style={{ lineHeight: "1.5" }}
@@ -263,9 +279,7 @@ export function ChatPage() {
             disabled={!input.trim() || isTyping}
             className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all mb-1"
             style={{
-              background: input.trim() && !isTyping
-                ? "linear-gradient(135deg, var(--color-brand-blue), #0a7acc)"
-                : "rgba(255,255,255,0.08)",
+              background: input.trim() && !isTyping ? agent.gradient : "rgba(255,255,255,0.08)",
               color: input.trim() && !isTyping ? "#fff" : "rgba(255,255,255,0.3)",
               transform: input.trim() && !isTyping ? "scale(1)" : "scale(0.95)",
             }}
