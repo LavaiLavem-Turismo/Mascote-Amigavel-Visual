@@ -10,6 +10,7 @@ export interface Message {
   text: string;
   resumo?: ResumoData;
   suporte?: SuporteData;
+  chips?: string[];
 }
 
 interface Props {

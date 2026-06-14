@@ -4,6 +4,7 @@ import type { ChatMessage } from "../lib/api";
 import { MessageBubble } from "../components/MessageBubble";
 import type { Message } from "../components/MessageBubble";
 import { TypingIndicator } from "../components/TypingIndicator";
+import { QuickReplies } from "../components/QuickReplies";
 import mascoteImg from "@assets/ChatGPT_Image_21_de_dez._de_2025,_13_03_23_1781388637862.png";
 
 let idCounter = 0;
@@ -11,10 +12,13 @@ function uid() {
   return String(++idCounter);
 }
 
+const WELCOME_CHIPS = ["🏄 Aventura", "🌊 Praia", "🏛️ História", "💰 Preços"];
+
 const WELCOME_MESSAGE: Message = {
   id: "0",
   role: "bot",
   text: "Olá! Sou a Lala, sua guia virtual da La Vai La Vem Turismo! 🌊 Estou aqui para te ajudar a escolher os melhores passeios em Natal/RN. Você prefere aventura nas dunas, mergulho no mar, ou conhecer a cidade histórica?",
+  chips: WELCOME_CHIPS,
 };
 
 export function ChatPage() {
@@ -29,11 +33,11 @@ export function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  const handleSend = useCallback(async () => {
-    const text = input.trim();
+  const handleSend = useCallback(async (override?: string) => {
+    const text = (override ?? input).trim();
     if (!text || isTyping) return;
 
-    setInput("");
+    if (!override) setInput("");
 
     const userMessage: Message = { id: uid(), role: "user", text };
     setMessages((prev) => [...prev, userMessage]);
@@ -69,12 +73,21 @@ export function ChatPage() {
     }
   }, [input, isTyping, history]);
 
+  const handleChipClick = useCallback((chip: string) => {
+    handleSend(chip);
+  }, [handleSend]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
+
+  const lastBotIndex = messages.reduceRight(
+    (found, msg, i) => (found === -1 && msg.role === "bot" ? i : found),
+    -1
+  );
 
   return (
     <div
@@ -117,8 +130,17 @@ export function ChatPage() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-4">
-        {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} />
+        {messages.map((msg, i) => (
+          <div key={msg.id} className="flex flex-col gap-2">
+            <MessageBubble message={msg} />
+            {msg.chips && i === lastBotIndex && !isTyping && (
+              <QuickReplies
+                chips={msg.chips}
+                onSelect={handleChipClick}
+                disabled={isTyping}
+              />
+            )}
+          </div>
         ))}
         {isTyping && <TypingIndicator />}
         <div ref={messagesEndRef} />

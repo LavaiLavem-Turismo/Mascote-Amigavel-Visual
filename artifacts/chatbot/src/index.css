@@ -126,6 +126,13 @@
   border-radius: 2px;
 }
 
+/* Quick reply chips */
+.chip-btn:hover:not(:disabled) {
+  background: rgba(30,144,255,0.18) !important;
+  border-color: rgba(30,144,255,0.6) !important;
+  transform: translateY(-1px);
+}
+
 /* Mobile safe-area (iPhone notch / home bar) */
 #root {
   height: 100dvh;
