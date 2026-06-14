@@ -19,19 +19,23 @@ export interface ParsedResponse {
   text: string;
   resumo?: ResumoData;
   suporte?: SuporteData;
+  chips?: string[];
 }
 
 export function parseResponse(content: string): ParsedResponse {
   const resumoMatch = content.match(/\|\|\|RESUMO:(\{.*?\})\|\|\|/s);
   const suporteMatch = content.match(/\|\|\|SUPORTE:(\{.*?\})\|\|\|/s);
+  const chipsMatch = content.match(/\|\|\|CHIPS:(\[.*?\])\|\|\|/s);
 
   const text = content
     .replace(/\|\|\|RESUMO:\{.*?\}\|\|\|/s, "")
     .replace(/\|\|\|SUPORTE:\{.*?\}\|\|\|/s, "")
+    .replace(/\|\|\|CHIPS:\[.*?\]\|\|\|/s, "")
     .trim();
 
   let resumo: ResumoData | undefined;
   let suporte: SuporteData | undefined;
+  let chips: string[] | undefined;
 
   if (resumoMatch) {
     try {
@@ -49,7 +53,18 @@ export function parseResponse(content: string): ParsedResponse {
     }
   }
 
-  return { text, resumo, suporte };
+  if (chipsMatch) {
+    try {
+      const parsed = JSON.parse(chipsMatch[1]);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        chips = parsed.map(String).slice(0, 4);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return { text, resumo, suporte, chips };
 }
 
 export async function sendChatMessage(messages: ChatMessage[], agentId?: string): Promise<string> {

@@ -116,6 +116,7 @@ export function ChatPage({ agent, onBack }: Props) {
         text: parsed.text,
         resumo: parsed.resumo,
         suporte: parsed.suporte,
+        chips: parsed.chips,
       };
 
       setMessages((prev) => [...prev, botMessage]);
@@ -228,7 +229,8 @@ export function ChatPage({ agent, onBack }: Props) {
         {messages.map((msg, i) => (
           <div key={msg.id} className="flex flex-col gap-2">
             <MessageBubble message={msg} agent={agent} />
-            {msg.chips && i === lastBotIndex && !isTyping && showWelcomeChips && (
+            {msg.chips && i === lastBotIndex && !isTyping &&
+              (msg.id !== `welcome-${agent.id}` || showWelcomeChips) && (
               <QuickReplies
                 chips={msg.chips}
                 onSelect={handleChipClick}
