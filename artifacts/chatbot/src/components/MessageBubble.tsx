@@ -86,14 +86,18 @@ export function MessageBubble({ message, agent }: Props) {
                 Assunto: <em>{message.suporte.problema}</em>
               </p>
               {message.suporte.nome && (
-                <p className="text-xs text-white/60">Cliente: {message.suporte.nome}</p>
+                <p className="text-xs text-white/60">👤 Cliente: {message.suporte.nome}</p>
+              )}
+              {message.suporte.passeio && (
+                <p className="text-xs text-white/60">🧳 Passeio: {message.suporte.passeio}</p>
               )}
             </div>
             <a
               href={`https://wa.me/${CATALOG.whatsapp}?text=${encodeURIComponent(
-                `Olá! Preciso de suporte.\n\n` +
+                `Olá! Preciso de atendimento.\n\n` +
                 `👤 Nome: ${message.suporte.nome || "não informado"}\n` +
-                `❓ Problema: ${message.suporte.problema}\n\n` +
+                (message.suporte.passeio ? `🧳 Passeio: ${message.suporte.passeio}\n` : "") +
+                `❓ Assunto: ${message.suporte.problema}\n\n` +
                 `Fui direcionado pelo chatbot da La Vai La Vem Turismo.`
               )}`}
               target="_blank"

@@ -13,6 +13,7 @@ export interface ResumoData {
 export interface SuporteData {
   problema: string;
   nome: string;
+  passeio?: string;
 }
 
 export interface ParsedResponse {
