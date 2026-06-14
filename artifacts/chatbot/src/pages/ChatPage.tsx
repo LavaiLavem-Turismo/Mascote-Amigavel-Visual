@@ -9,29 +9,89 @@ import mascoteImg from "@assets/ChatGPT_Image_21_de_dez._de_2025,_13_03_23_17813
 
 let idCounter = 0;
 function uid() {
-  return String(++idCounter);
+  return String(Date.now()) + String(++idCounter);
 }
 
 const WELCOME_CHIPS = ["🏄 Aventura", "🌊 Praia", "🏛️ História", "💰 Preços"];
 
 const WELCOME_MESSAGE: Message = {
-  id: "0",
+  id: "welcome-0",
   role: "bot",
   text: "Olá! Sou a Lala, sua guia virtual da La Vai La Vem Turismo! 🌊 Estou aqui para te ajudar a escolher os melhores passeios em Natal/RN. Você prefere aventura nas dunas, mergulho no mar, ou conhecer a cidade histórica?",
   chips: WELCOME_CHIPS,
 };
 
+const LS_MESSAGES_KEY = "lala_chat_messages";
+const LS_HISTORY_KEY = "lala_chat_history";
+const LS_CHIPS_SEEN_KEY = "lala_welcome_chips_seen";
+
+function loadFromStorage<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveToStorage(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // storage full or unavailable — fail silently
+  }
+}
+
+function getInitialMessages(): Message[] {
+  const saved = loadFromStorage<Message[]>(LS_MESSAGES_KEY);
+  if (saved && saved.length > 0) return saved;
+  return [WELCOME_MESSAGE];
+}
+
+function getInitialHistory(): ChatMessage[] {
+  const saved = loadFromStorage<ChatMessage[]>(LS_HISTORY_KEY);
+  return saved ?? [];
+}
+
 export function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
+  const [messages, setMessages] = useState<Message[]>(getInitialMessages);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [history, setHistory] = useState<ChatMessage[]>([]);
+  const [history, setHistory] = useState<ChatMessage[]>(getInitialHistory);
+  // True only on the very first ever opening of the app (no LS flag present).
+  // Once set false (by "Nova conversa" or next sessions) chips never return.
+  const [showWelcomeChips, setShowWelcomeChips] = useState<boolean>(
+    () => localStorage.getItem(LS_CHIPS_SEEN_KEY) !== "true"
+  );
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
+
+  useEffect(() => {
+    saveToStorage(LS_MESSAGES_KEY, messages);
+  }, [messages]);
+
+  useEffect(() => {
+    saveToStorage(LS_HISTORY_KEY, history);
+  }, [history]);
+
+  // Persist the "chips seen" flag on first mount so future sessions skip chips.
+  useEffect(() => {
+    localStorage.setItem(LS_CHIPS_SEEN_KEY, "true");
+  }, []);
+
+  const handleNewConversation = useCallback(() => {
+    localStorage.removeItem(LS_MESSAGES_KEY);
+    localStorage.removeItem(LS_HISTORY_KEY);
+    setMessages([WELCOME_MESSAGE]);
+    setHistory([]);
+    setInput("");
+    setShowWelcomeChips(false); // chips never reappear after Nova conversa
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }, []);
 
   const handleSend = useCallback(async (override?: string) => {
     const text = (override ?? input).trim();
@@ -89,6 +149,7 @@ export function ChatPage() {
     -1
   );
 
+
   return (
     <div
       className="flex flex-col h-screen w-full"
@@ -113,7 +174,7 @@ export function ChatPage() {
             className="w-full h-full object-cover object-top"
           />
         </div>
-        <div className="flex flex-col">
+        <div className="flex flex-col flex-1">
           <span className="text-base font-semibold text-white leading-tight">Lala</span>
           <span className="text-xs flex items-center gap-1" style={{ color: "var(--color-brand-teal)" }}>
             <span
@@ -123,6 +184,26 @@ export function ChatPage() {
             La Vai La Vem Turismo · Online agora
           </span>
         </div>
+
+        {/* Nova conversa button — only when there's a saved conversation */}
+        {messages.length > 1 && (
+          <button
+            onClick={handleNewConversation}
+            title="Nova conversa"
+            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all hover:scale-105 active:scale-95"
+            style={{
+              background: "rgba(30,144,255,0.12)",
+              border: "1px solid rgba(30,144,255,0.3)",
+              color: "rgba(255,255,255,0.7)",
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 .49-4.35" />
+            </svg>
+            Nova conversa
+          </button>
+        )}
       </header>
 
       {/* Wave stripe */}
@@ -133,7 +214,7 @@ export function ChatPage() {
         {messages.map((msg, i) => (
           <div key={msg.id} className="flex flex-col gap-2">
             <MessageBubble message={msg} />
-            {msg.chips && i === lastBotIndex && !isTyping && (
+            {msg.chips && i === lastBotIndex && !isTyping && showWelcomeChips && (
               <QuickReplies
                 chips={msg.chips}
                 onSelect={handleChipClick}
@@ -178,7 +259,7 @@ export function ChatPage() {
             disabled={isTyping}
           />
           <button
-            onClick={handleSend}
+            onClick={() => handleSend()}
             disabled={!input.trim() || isTyping}
             className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all mb-1"
             style={{
