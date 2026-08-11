@@ -14,7 +14,7 @@ Chatbot de atendimento ao cliente para a La Vai La Vem Turismo, agência de pass
 - pnpm workspaces, Node.js 24, TypeScript 5.9
 - Frontend: React + Vite + Tailwind (DM Sans, dark theme)
 - API: Express 5
-- IA: OpenAI gpt-4o-mini via `OPENAI_API_KEY`
+- IA: modelo compatível com OpenAI via Groq, usando `GROQ_API_KEY` somente no servidor
 
 ## Where things live
 
@@ -44,10 +44,10 @@ Chatbot de atendimento ao cliente para a La Vai La Vem Turismo, agência de pass
 
 - Identidade visual: fundo #0f1117, cards #1a1d27, azul #1E90FF, vermelho #C0392B, teal #00d4aa
 - Fonte: DM Sans
-- Número WhatsApp: `5584999999999` — trocar pelo número real em `artifacts/chatbot/src/catalog.ts`
+- Número WhatsApp: configurado por `VITE_WHATSAPP_NUMBER` na web e `EXPO_PUBLIC_WHATSAPP_NUMBER` no mobile
 
 ## Gotchas
 
 - Sempre reiniciar o workflow `api-server` após alterar `artifacts/api-server/src/routes/chat.ts`
-- O número de WhatsApp está em `artifacts/chatbot/src/catalog.ts` → campo `whatsapp`
-- `OPENAI_API_KEY` deve estar nos Secrets do Replit
+- O número de WhatsApp é público e deve ser configurado por variável de ambiente
+- `GROQ_API_KEY` deve estar nos Secrets do Replit; nunca use uma variável `VITE_*` para chaves

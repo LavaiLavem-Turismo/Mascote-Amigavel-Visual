@@ -17,6 +17,19 @@ export function WhatsAppButton({ resumo, whatsapp }: Props) {
     `Vi as informações no chatbot da La Vai La Vem Turismo!`
   );
 
+  if (!whatsapp) {
+    return (
+      <div
+        className="msg-animate rounded-2xl p-4"
+        style={{ background: "var(--color-bg-card)", border: "1px solid rgba(0,212,170,0.3)" }}
+      >
+        <p className="text-sm text-white/80">
+          Resumo salvo. Configure o número de WhatsApp da agência para concluir a reserva.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div
       className="msg-animate rounded-2xl p-4 flex flex-col gap-3"

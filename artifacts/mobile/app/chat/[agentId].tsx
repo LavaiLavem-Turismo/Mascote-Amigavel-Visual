@@ -28,7 +28,7 @@ interface Message {
   content: string;
 }
 
-const WHATSAPP_NUMBER = "5584999999999";
+const WHATSAPP_NUMBER = process.env.EXPO_PUBLIC_WHATSAPP_NUMBER ?? "";
 const WHATSAPP_MESSAGE = "Olá! Vim pelo app da La Vai La Vem Turismo e gostaria de mais informações.";
 
 function ChatBubble({
@@ -235,6 +235,10 @@ export default function ChatScreen() {
   );
 
   const openWhatsApp = () => {
+    if (!WHATSAPP_NUMBER) {
+      return;
+    }
+
     const url = `whatsapp://send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
     Linking.openURL(url).catch(() => {
       Linking.openURL(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`);

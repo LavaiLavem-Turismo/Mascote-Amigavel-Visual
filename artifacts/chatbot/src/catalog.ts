@@ -1,6 +1,7 @@
 export const CATALOG = {
   empresa: "La Vai La Vem Turismo",
-  whatsapp: "5584999485280",
+  // Configure the public business number with VITE_WHATSAPP_NUMBER.
+  whatsapp: import.meta.env.VITE_WHATSAPP_NUMBER ?? "",
   passeios: [
     {
       id: "pipa",
