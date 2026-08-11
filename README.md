@@ -1,4 +1,4 @@
-# La Vai La Vem Turismo
+# La Vai La Vem Turismo - ChatBot
 
 Chatbot de atendimento para uma agência de passeios em Natal/RN. O projeto
 inclui uma interface web, um app mobile em Expo e uma API Express que conversa
